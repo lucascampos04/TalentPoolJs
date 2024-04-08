@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import "../../css/style.css"
+import "../../css/style.css";
+import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { db } from '../../Services/firebase';
 
 export const HomePage = () => {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -25,6 +27,25 @@ export const HomePage = () => {
         setSelectedFile(null);
         setShowAreaSelect(false);
         setSuccess(false);
+    };
+
+    const handleSubmit = async () => {
+        if (selectedFile && selectedArea) {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const curriculoConteudo = reader.result;
+                try {
+                    const docRef = await addDoc(collection(db, 'docs'), {
+                        doc: curriculoConteudo,
+                        area: selectedArea
+                    });
+                    console.log('Currículo enviado com sucesso! Document ID:', docRef.id);
+                } catch (error) {
+                    console.error('Erro ao enviar currículo:', error);
+                }
+            };
+            reader.readAsDataURL(selectedFile);
+        }
     };
 
     return (
@@ -57,7 +78,7 @@ export const HomePage = () => {
                             <option value="Saúde">Saúde</option>
                         </select>
                         <br/>
-                        <button className="btn btn-primary">Enviar</button>
+                        <button className="btn btn-primary" onClick={handleSubmit}>Enviar</button>
                     </div>
                 )}
             </div>
