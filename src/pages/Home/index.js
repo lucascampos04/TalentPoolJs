@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "../../css/style.css";
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../Services/firebase';
 
 export const HomePage = () => {
@@ -15,7 +15,6 @@ export const HomePage = () => {
         if (file) {
             setSelectedFile(file);
             setShowAreaSelect(true);
-            setSuccess(true);
         }
     };
 
@@ -40,6 +39,7 @@ export const HomePage = () => {
                         area: selectedArea
                     });
                     console.log('Currículo enviado com sucesso! Document ID:', docRef.id);
+                    setSuccess(true);
                 } catch (error) {
                     console.error('Erro ao enviar currículo:', error);
                 }
@@ -52,7 +52,8 @@ export const HomePage = () => {
         <div className="container-fluid">
             <div className='main'>
                 <h1 className={`fw-bold ${success ? 'text-success' : ''}`}>
-                    {selectedFile ? "Currículo selecionado com sucesso" : "Coloque seu currículo aqui"}
+                    {success ? "Currículo enviado com sucesso" : selectedFile ?
+                        <span className="text-primary">Currículo selecionado com sucesso</span> : "Coloque seu currículo aqui"}
                 </h1>
                 {selectedFile ? (
                     <div>
