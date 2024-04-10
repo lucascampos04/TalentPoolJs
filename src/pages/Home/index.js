@@ -1,88 +1,105 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "../../css/style.css";
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../Services/firebase';
+import { Modal, Button, ProgressBar } from 'react-bootstrap';
 
 export const HomePage = () => {
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [selectedArea, setSelectedArea] = useState('');
-    const [showAreaSelect, setShowAreaSelect] = useState(false);
+    const [file, setFile] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [message, setMessage] = useState('Coloque seu currículo aqui');
+    const [inputKey, setInputKey] = useState(0);
+    const [showModal, setShowModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+    const [progress, setProgress] = useState(0);
 
     const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-            setShowAreaSelect(true);
+        const selectedFile = event.target.files[0];
+        if (selectedFile && selectedFile.type === 'application/pdf') {
+            setFile(selectedFile);
+            setSuccess(true);
+            setMessage('Currículo selecionado');
+            setProgress(60);
         }
-    };
+    }
 
-    const handleAreaChange = (event) => {
-        setSelectedArea(event.target.value);
-    };
+    const handleSubmit = (e) => {
+        if (file){
+            setModalMessage("Currículo enviado com sucesso");
+            setShowModal(true);
 
-    const handleRemoveFile = () => {
-        setSelectedFile(null);
-        setShowAreaSelect(false);
+            setTimeout(() => {
+                setProgress(100);
+            }, 1000);
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
+        } else {
+            setModalMessage("Por favor, selecione um PDF");
+            setShowModal(true);
+        }
+    }
+
+    const handleRemove = () => {
+        setFile(null);
         setSuccess(false);
-    };
+        setMessage('Coloque seu currículo aqui');
+        setInputKey(prevKey => prevKey + 1);
+        setProgress();
+    }
 
-    const handleSubmit = async () => {
-        if (selectedFile && selectedArea) {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const curriculoConteudo = reader.result;
-                try {
-                    const docRef = await addDoc(collection(db, 'docs'), {
-                        doc: curriculoConteudo,
-                        area: selectedArea
-                    });
-                    console.log('Currículo enviado com sucesso! Document ID:', docRef.id);
-                    setSuccess(true);
-                } catch (error) {
-                    console.error('Erro ao enviar currículo:', error);
-                }
-            };
-            reader.readAsDataURL(selectedFile);
-        }
-    };
+    const closeModal = () => {
+        setShowModal(false);
+    }
 
     return (
         <div className="container-fluid">
-            <div className='main'>
-                <h1 className={`fw-bold ${success ? 'text-success' : ''}`}>
-                    {success ? "Currículo enviado com sucesso" : selectedFile ?
-                        <span className="text-primary">Currículo selecionado com sucesso</span> : "Coloque seu currículo aqui"}
+            <div className='main gap-4'>
+                <h1 className={`fw-bold ${success ? 'text-success' : 'text-primary-emphasis'} ${success ? 'success-animation' : ''}`}>
+                    {message}
                 </h1>
-                {selectedFile ? (
-                    <div>
-                        <p>Arquivo selecionado: {selectedFile.name}</p>
-                        <button className="btn btn-danger" onClick={handleRemoveFile}>Remover</button>
-                    </div>
-                ) : (
-                    <input
-                        type="file"
-                        placeholder={"Currículo aqui"}
-                        accept=".pdf"
-                        className="input form-control"
-                        onChange={handleFileChange}
-                    />
-                )}
-                {showAreaSelect && (
-                    <div>
-                        <label htmlFor="areaSelect">Selecione sua área de interesse:</label>
-                        <select id="areaSelect" className="form-select" onChange={handleAreaChange} value={selectedArea}>
-                            <option value="">Selecione...</option>
-                            <option value="TI">Tecnologia da Informação</option>
-                            <option value="Engenharia">Engenharia</option>
-                            <option value="Saúde">Saúde</option>
-                        </select>
-                        <br/>
-                        <button className="btn btn-primary" onClick={handleSubmit}>Enviar</button>
-                    </div>
-                )}
+                <input
+                    key={inputKey}
+                    className={`input form-control custom-input`}
+                    placeholder={"Currículo aqui"}
+                    accept=".pdf"
+                    type={"file"}
+                    onChange={handleFileChange}
+                />
+                <ProgressBar
+                    now={progress}
+                    label={`${progress}%`}
+                    style={{ width: `${progress}%` }}
+                />
+
+                <div className="d-flex flex-right  gap-3">
+                    <button
+                        className={`btn btn-outline-success fw-bold`}
+                        onClick={handleSubmit}
+                    >
+                        Salvar
+                    </button>
+
+                    <button
+                        className={`btn btn-outline-danger fw-bold`}
+                        onClick={handleRemove}
+                    >
+                        Remover
+                    </button>
+
+                </div>
             </div>
+            <Modal show={showModal} onHide={closeModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Status</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>{modalMessage}</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={closeModal}>
+                        Fechar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };
